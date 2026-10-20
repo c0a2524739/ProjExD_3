@@ -160,6 +160,35 @@ class Score:
         )
         screen.blit(self.img, self.rct)
 
+class Explosion:
+    """
+    爆弾を打ち落としたときの爆発エフェクトクラス
+    """
+    def __init__(self, bomb: Bomb):
+        # 爆発画像を読み込む
+        self.img = pg.image.load("fig/explosion.gif")
+
+        # 爆発画像を左右反転した画像も用意する
+        self.imgs = [
+            self.img,
+            pg.transform.flip(self.img, True, False)
+        ]
+
+        # 爆発画像の位置を爆弾の位置に合わせる
+        self.rct = self.img.get_rect()
+        self.rct.center = bomb.rct.center
+
+        # 爆発エフェクトの表示時間
+        self.life = 10
+
+    def update(self, screen: pg.Surface):
+        # 画像を交互に切り替えて爆発を動いているように見せる
+        self.img = self.imgs[self.life % 2]
+        screen.blit(self.img, self.rct)
+
+        # 表示時間を減らす
+        self.life -= 1
+
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
@@ -171,7 +200,8 @@ def main():
     for _ in range(NUM_OF_BOMBS):
         bomb = Bomb((255, 0, 0), 10)
         bombs.append(bomb)
-    beams =[] # ゲーム初期化時にはビームは存在しない
+    beams =[] 
+    explosions = []
     clock = pg.time.Clock()
     tmr = 0
     while True:
@@ -200,6 +230,7 @@ def main():
             # すべてのビームと爆弾の衝突判定
             for j, beam in enumerate(beams):
                 if beam is not None and beam.rct.colliderect(bomb.rct):
+                    explosions.append(Explosion(bomb))
                     beams[j] = None
                     bombs[i] = None
                     score.score += 1
@@ -221,6 +252,15 @@ def main():
             ]
         for bomb in bombs: 
             bomb.update(screen)
+        explosions = [
+            explosion for explosion in explosions
+            if explosion.life > 0
+        ]
+
+    # 爆発エフェクトを更新・描画する
+        for explosion in explosions:
+            explosion.update(screen)
+        
         score.update(screen)
         pg.display.update()
         tmr += 1
