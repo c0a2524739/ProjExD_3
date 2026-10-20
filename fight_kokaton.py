@@ -167,7 +167,7 @@ def main():
     bird = Bird((300, 200))
     score = Score()
     # bomb = Bomb((255, 0, 0), 10)
-    bombs= []
+    bombs = []
     for _ in range(NUM_OF_BOMBS):
         bomb = Bomb((255, 0, 0), 10)
         bombs.append(bomb)
