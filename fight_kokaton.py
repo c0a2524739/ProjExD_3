@@ -56,6 +56,7 @@ class Bird:
         self.img = __class__.imgs[(+5, 0)]
         self.rct: pg.Rect = self.img.get_rect()
         self.rct.center = xy
+        self.direction = (+5, 0)
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -81,7 +82,8 @@ class Bird:
         if check_bound(self.rct) != (True, True):
             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
-            self.img = __class__.imgs[tuple(sum_mv)]
+            self.direction = tuple(sum_mv)
+            self.img = __class__.imgs[self.direction]
         screen.blit(self.img, self.rct)
 
 
@@ -89,25 +91,40 @@ class Beam:
     """
     こうかとんが放つビームに関するクラス
     """
-    def __init__(self, bird:"Bird"):
-        """
-        ビーム画像Surfaceを生成する
-        引数 bird：ビームを放つこうかとん（Birdインスタンス）
-        """
-        self.img = pg.image.load(f"fig/beam.png")
+    def __init__(self, bird: "Bird"):
+        # ビーム画像を読み込む
+        img = pg.image.load("fig/beam.png")
+
+        # こうかとんの向きに応じた回転角度
+        angles = {
+            (+5, 0): 0,       # 右
+            (+5, -5): 45,     # 右上
+            (0, -5): 90,      # 上
+            (-5, -5): 135,    # 左上
+            (-5, 0): 180,     # 左
+            (-5, +5): 225,    # 左下
+            (0, +5): 270,     # 下
+            (+5, +5): 315,    # 右下
+        }
+
+        # こうかとんの向きを取得
+        self.vx, self.vy = bird.direction
+
+        # ビーム画像を回転
+        self.img = pg.transform.rotate(img, angles[bird.direction])
         self.rct = self.img.get_rect()
-        self.rct.centery = bird.rct.centery  # ビームの中心縦座標 = こうかとんの中心縦座標
-        self.rct.left = bird.rct.right  # ビームの左座標 = こうかとんの右座標
-        self.vx, self.vy = +5, 0
+
+        # こうかとんの中心付近から発射
+        self.rct.center = (
+            bird.rct.centerx + self.vx * 3,
+            bird.rct.centery + self.vy * 3
+        )
 
     def update(self, screen: pg.Surface):
-        """
-        ビームを速度ベクトルself.vx, self.vyに基づき移動させる
-        引数 screen：画面Surface
-        """
+        """ビームを移動・描画する"""
         if check_bound(self.rct) == (True, True):
             self.rct.move_ip(self.vx, self.vy)
-            screen.blit(self.img, self.rct)    
+            screen.blit(self.img, self.rct)  
 
 
 class Bomb:
